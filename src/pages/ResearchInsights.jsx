@@ -36,6 +36,12 @@ export default function ResearchInsights() {
         { name: 'Positif', value: 1427, color: COLORS.emerald }
     ];
 
+    const testData = [
+        { name: 'Negatif', value: 612, color: COLORS.red },
+        { name: 'Netral', value: 145, color: COLORS.slate },
+        { name: 'Positif', value: 409, color: COLORS.emerald }
+    ];
+
     const cvTestData = CV_VS_TEST.map(d => ({ name: d.name, 'CV Accuracy': d.cv, 'Test Accuracy': d.test }));
 
     const targetRef = useRef(null);
@@ -61,11 +67,146 @@ export default function ResearchInsights() {
                     Hasil Riset
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
-                    Visualisasi hasil perbandingan metrik performa antara model Baseline dan teknik balancing (SMOTE & Back-translation).
+                    Visualisasi hasil eksperimen menampilkan perbandingan antara Baseline, Tanpa Netral, SMOTE, dan Back-translation.
                 </p>
             </motion.div>
 
-            {/* Section 1: Comparative Metrics */}
+            {/* Section 1: Data Distribution */}
+            <motion.div
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: false, margin: "-50px" }}
+                transition={{ duration: 0.8 }}
+                className="card-clean"
+            >
+                <div className="flex items-center gap-4 mb-4 shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-sm">
+                        <FiPieChart className="w-6 h-6 icon-emboss" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Distribusi Data</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Distribusi dataset menjadi data latih dan data uji dengan proporsi 70:30.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Before */}
+                    <div className="card-inner">
+                        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 text-center mb-1">Sebelum Balancing</h3>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 text-center mb-4">Dataset Latih (Tidak Seimbang)</p>
+                        <div className="min-h-[220px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RechartsPie>
+                                    <ChartGradients />
+                                    <Pie
+                                        data={distributionData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={50}
+                                        outerRadius={80}
+                                        paddingAngle={4}
+                                        dataKey="value"
+                                        label={renderCustomizedLabel}
+                                        labelLine={false}
+                                    >
+                                        {distributionData.map((entry, index) => {
+                                            const gradientMap = { '#10b981': 'url(#pieEmerald)', '#ef4444': 'url(#pieRed)', '#64748b': 'url(#pieSlate)' };
+                                            return (<Cell key={`cell-${index}`} fill={gradientMap[entry.color] || entry.color} stroke="rgba(255,255,255,0.3)" strokeWidth={2} filter="url(#chartShadow)" />);
+                                        })}
+                                    </Pie>
+                                    <Legend 
+                                        verticalAlign="bottom" 
+                                        height={36} 
+                                        iconType="circle"
+                                        formatter={(value, entry) => {
+                                            const item = distributionData.find(d => d.name === value);
+                                            return `${value}:${item?.value || 0}`;
+                                        }}
+                                    />
+                                </RechartsPie>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* After */}
+                    <div className="card-inner">
+                        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 text-center mb-1">Sesudah Balancing</h3>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 text-center mb-4">Teknik SMOTE / Back-translation</p>
+                        <div className="min-h-[220px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RechartsPie>
+                                    <ChartGradients />
+                                    <Pie
+                                        data={balancedData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={50}
+                                        outerRadius={80}
+                                        paddingAngle={4}
+                                        dataKey="value"
+                                        label={renderCustomizedLabel}
+                                        labelLine={false}
+                                    >
+                                        {balancedData.map((entry, index) => {
+                                            const gradientMap = { '#10b981': 'url(#pieEmerald)', '#ef4444': 'url(#pieRed)', '#64748b': 'url(#pieSlate)' };
+                                            return (<Cell key={`cell-${index}`} fill={gradientMap[entry.color] || entry.color} stroke="rgba(255,255,255,0.3)" strokeWidth={2} filter="url(#chartShadow)" />);
+                                        })}
+                                    </Pie>
+                                    <Legend 
+                                        verticalAlign="bottom" 
+                                        height={36} 
+                                        iconType="circle"
+                                        formatter={(value, entry) => {
+                                            const item = balancedData.find(d => d.name === value);
+                                            return `${value}:${item?.value || 0}`;
+                                        }}
+                                    />
+                                </RechartsPie>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Test Data */}
+                    <div className="card-inner">
+                        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 text-center mb-1">Data Uji</h3>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 text-center mb-4">Split 30% dari Dataset Asli</p>
+                        <div className="min-h-[220px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RechartsPie>
+                                    <ChartGradients />
+                                    <Pie
+                                        data={testData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={50}
+                                        outerRadius={80}
+                                        paddingAngle={4}
+                                        dataKey="value"
+                                        label={renderCustomizedLabel}
+                                        labelLine={false}
+                                    >
+                                        {testData.map((entry, index) => {
+                                            const gradientMap = { '#10b981': 'url(#pieEmerald)', '#ef4444': 'url(#pieRed)', '#64748b': 'url(#pieSlate)' };
+                                            return (<Cell key={`cell-${index}`} fill={gradientMap[entry.color] || entry.color} stroke="rgba(255,255,255,0.3)" strokeWidth={2} filter="url(#chartShadow)" />);
+                                        })}
+                                    </Pie>
+                                    <Legend 
+                                        verticalAlign="bottom" 
+                                        height={36} 
+                                        iconType="circle"
+                                        formatter={(value, entry) => {
+                                            const item = testData.find(d => d.name === value);
+                                            return `${value}:${item?.value || 0}`;
+                                        }}
+                                    />
+                                </RechartsPie>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* Section 2: Comparative Metrics */}
             <motion.div
                 ref={targetRef}
                 className="card-clean lg:[&]:transform-gpu"
@@ -124,7 +265,7 @@ export default function ResearchInsights() {
                 </div>
             </motion.div>
 
-            {/* Section 2: Confusion Matrix Gallery */}
+            {/* Section 3: Confusion Matrix Gallery */}
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
@@ -166,8 +307,7 @@ export default function ResearchInsights() {
                 </div>
             </motion.div>
 
-            {/* Section 2.5: Classification Report Heatmap Gallery */}
-            {/* Section 2.5: Classification Report Heatmap Gallery */}
+            {/* Section 4: Classification Report Heatmap Gallery */}
             <motion.div
                 initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -257,196 +397,97 @@ export default function ResearchInsights() {
             </motion.div>
 
             <div className="grid lg:grid-cols-2 gap-4">
-                {/* Section 3: Data Distribution */}
+                {/* Section 5: F1 Score Per Class */}
                 <motion.div
                     initial={{ opacity: 0, y: 60 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: false, margin: "-50px" }}
-                    transition={{ duration: 0.8 }}
-                    className="card-clean h-full flex flex-col"
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className="card-clean"
                 >
-                    <div className="flex items-center gap-4 mb-4 shrink-0">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-sm">
-                            <FiPieChart className="w-6 h-6 icon-emboss" />
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm">
+                            <FiBarChart2 className="w-6 h-6 icon-emboss" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Distribusi Data Latih</h2>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Tidak Seimbang vs Seimbang.</p>
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">F1-Score Per Kelas</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Analisis performa secara mendalam.</p>
                         </div>
                     </div>
-
-                    <div className="flex-grow flex flex-col gap-4">
-                        {/* Before */}
-                        <div className="card-inner">
-                            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 text-center mb-1">Sebelum Balancing</h3>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 text-center mb-4">Dataset Asli (Tidak Seimbang)</p>
-                            <div className="flex-grow min-h-[220px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <RechartsPie>
-                                        <ChartGradients />
-                                        <Pie
-                                            data={distributionData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={90}
-                                            paddingAngle={4}
-                                            dataKey="value"
-                                            label={renderCustomizedLabel}
-                                            labelLine={false}
-                                        >
-                                            {distributionData.map((entry, index) => {
-                                                const gradientMap = { '#10b981': 'url(#pieEmerald)', '#ef4444': 'url(#pieRed)', '#64748b': 'url(#pieSlate)' };
-                                                return (<Cell key={`cell-${index}`} fill={gradientMap[entry.color] || entry.color} stroke="rgba(255,255,255,0.3)" strokeWidth={2} filter="url(#chartShadow)" />);
-                                            })}
-                                        </Pie>
-                                        <Legend 
-                                            verticalAlign="bottom" 
-                                            height={36} 
-                                            iconType="circle"
-                                            formatter={(value, entry) => {
-                                                const item = distributionData.find(d => d.name === value);
-                                                return `${value}:${item?.value || 0}`;
-                                            }}
-                                        />
-                                    </RechartsPie>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        {/* After */}
-                        <div className="card-inner">
-                            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 text-center mb-1">Sesudah Balancing</h3>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 text-center mb-4">Teknik SMOTE / Back-translation</p>
-                            <div className="flex-grow min-h-[220px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <RechartsPie>
-                                        <ChartGradients />
-                                        <Pie
-                                            data={balancedData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={90}
-                                            paddingAngle={4}
-                                            dataKey="value"
-                                            label={renderCustomizedLabel}
-                                            labelLine={false}
-                                        >
-                                            {balancedData.map((entry, index) => {
-                                                const gradientMap = { '#10b981': 'url(#pieEmerald)', '#ef4444': 'url(#pieRed)', '#64748b': 'url(#pieSlate)' };
-                                                return (<Cell key={`cell-${index}`} fill={gradientMap[entry.color] || entry.color} stroke="rgba(255,255,255,0.3)" strokeWidth={2} filter="url(#chartShadow)" />);
-                                            })}
-                                        </Pie>
-                                        <Legend 
-                                            verticalAlign="bottom" 
-                                            height={36} 
-                                            iconType="circle"
-                                            formatter={(value, entry) => {
-                                                const item = balancedData.find(d => d.name === value);
-                                                return `${value}:${item?.value || 0}`;
-                                            }}
-                                        />
-                                    </RechartsPie>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
+                    <div className="h-72 w-full mb-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={F1_PER_CLASS} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} barGap={2}>
+                                <ChartGradients />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
+                                <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} />
+                                <YAxis stroke="#64748b" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} domain={[0, 100]} />
+                                <Legend iconType="circle" />
+                                <Bar dataKey="Normal" fill="url(#blueGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
+                                    <LabelList dataKey="Normal" position="top" fill={COLORS.blue} fontSize={9} fontWeight={600} />
+                                </Bar>
+                                <Bar dataKey="TanpaNetral" name="No Neutral" fill="url(#cyanGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
+                                    <LabelList dataKey="TanpaNetral" position="top" fill={COLORS.cyan} fontSize={9} fontWeight={600} />
+                                </Bar>
+                                <Bar dataKey="SMOTE" fill="url(#purpleGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
+                                    <LabelList dataKey="SMOTE" position="top" fill={COLORS.purple} fontSize={9} fontWeight={600} />
+                                </Bar>
+                                <Bar dataKey="Backstranslation" name="Back-Trans" fill="url(#emeraldGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
+                                    <LabelList dataKey="Backstranslation" position="top" fill={COLORS.emerald} fontSize={9} fontWeight={600} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-xl text-sm text-amber-900 dark:text-amber-300 leading-relaxed">
+                        <strong>Temuan:</strong> Model <span className="font-bold text-cyan-700 dark:text-cyan-400">Tanpa Netral</span> memiliki performa tertinggi karena menghilangkan ambiguitas. Namun untuk 3 kelas, teknik balancing berhasil menaikkan performa kelas Netral dari <span className="font-bold">30%</span> ke <span className="font-bold">50%</span>.
                     </div>
                 </motion.div>
 
-                <div className="space-y-4">
-                    {/* Section 4: F1 Score Per Class */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 60 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: false, margin: "-50px" }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="card-clean"
-                    >
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm">
-                                <FiBarChart2 className="w-6 h-6 icon-emboss" />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">F1-Score Per Kelas</h2>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Analisis performa secara mendalam.</p>
-                            </div>
+                {/* Section 6: CV vs Test */}
+                <motion.div
+                    initial={{ opacity: 0, y: 60 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: false, margin: "-50px" }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                    className="card-clean"
+                >
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center shadow-sm">
+                            <FiTrendingUp className="w-6 h-6 icon-emboss" />
                         </div>
-                        <div className="h-72 w-full mb-4">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={F1_PER_CLASS} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} barGap={2}>
-                                    <ChartGradients />
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
-                                    <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} />
-                                    <YAxis stroke="#64748b" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} domain={[0, 100]} />
-                                    <Legend iconType="circle" />
-                                    <Bar dataKey="Normal" fill="url(#blueGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
-                                        <LabelList dataKey="Normal" position="top" fill={COLORS.blue} fontSize={9} fontWeight={600} />
-                                    </Bar>
-                                    <Bar dataKey="TanpaNetral" name="No Neutral" fill="url(#cyanGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
-                                        <LabelList dataKey="TanpaNetral" position="top" fill={COLORS.cyan} fontSize={9} fontWeight={600} />
-                                    </Bar>
-                                    <Bar dataKey="SMOTE" fill="url(#purpleGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
-                                        <LabelList dataKey="SMOTE" position="top" fill={COLORS.purple} fontSize={9} fontWeight={600} />
-                                    </Bar>
-                                    <Bar dataKey="Backstranslation" name="Back-Trans" fill="url(#emeraldGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
-                                        <LabelList dataKey="Backstranslation" position="top" fill={COLORS.emerald} fontSize={9} fontWeight={600} />
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">CV vs Test Accuracy</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Analisis stabilitas model (Overfitting).</p>
                         </div>
-                        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-xl text-sm text-amber-900 dark:text-amber-300 leading-relaxed">
-                            <strong>Temuan:</strong> Model <span className="font-bold text-cyan-700 dark:text-cyan-400">Tanpa Netral</span> memiliki performa tertinggi karena menghilangkan ambiguitas. Namun untuk 3 kelas, teknik balancing berhasil menaikkan performa kelas Netral dari <span className="font-bold">30%</span> ke <span className="font-bold">50%</span>.
-                        </div>
-                    </motion.div>
+                    </div>
+                    <div className="h-64 w-full mb-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={cvTestData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} barGap={4}>
+                                <ChartGradients />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
+                                <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} />
+                                <YAxis stroke="#64748b" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} domain={[65, 90]} />
+                                <Legend iconType="circle" />
+                                <Bar dataKey="CV Accuracy" fill="url(#blueGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
+                                    <LabelList dataKey="CV Accuracy" position="top" fill={COLORS.blue} fontSize={10} fontWeight={600} formatter={(val) => val + '%'} />
+                                </Bar>
+                                <Bar dataKey="Test Accuracy" fill="url(#redGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
+                                    <LabelList dataKey="Test Accuracy" position="top" fill={COLORS.red} fontSize={10} fontWeight={600} formatter={(val) => val + '%'} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
 
-                    {/* Section 5: CV vs Test */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 60 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: false, margin: "-50px" }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
-                        className="card-clean"
-                    >
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center shadow-sm">
-                                <FiTrendingUp className="w-6 h-6 icon-emboss" />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">CV vs Test Accuracy</h2>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Analisis stabilitas model (Overfitting).</p>
-                            </div>
+                    <div className="space-y-3">
+                        <div className="flex gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl items-start">
+                            <FiCheckCircle className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                            <p className="text-xs text-emerald-800 dark:text-emerald-300">Model <strong>Tanpa Netral</strong> paling stabil (Selisih CV-Test &lt; 1%).</p>
                         </div>
-                        <div className="h-64 w-full mb-4">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={cvTestData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} barGap={4}>
-                                    <ChartGradients />
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
-                                    <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} />
-                                    <YAxis stroke="#64748b" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} domain={[65, 90]} />
-                                    <Legend iconType="circle" />
-                                    <Bar dataKey="CV Accuracy" fill="url(#blueGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
-                                        <LabelList dataKey="CV Accuracy" position="top" fill={COLORS.blue} fontSize={10} fontWeight={600} formatter={(val) => val + '%'} />
-                                    </Bar>
-                                    <Bar dataKey="Test Accuracy" fill="url(#redGloss)" radius={[4, 4, 0, 0]} filter="url(#emboss)">
-                                        <LabelList dataKey="Test Accuracy" position="top" fill={COLORS.red} fontSize={10} fontWeight={600} formatter={(val) => val + '%'} />
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <div className="flex gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl items-start">
+                            <FiAlertCircle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                            <p className="text-xs text-red-800 dark:text-red-300">Model Balancing mengalami indikasi <strong>Overfitting</strong> (Selisih &gt; 8%).</p>
                         </div>
-
-                        <div className="space-y-3">
-                            <div className="flex gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl items-start">
-                                <FiCheckCircle className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                                <p className="text-xs text-emerald-800 dark:text-emerald-300">Model <strong>Tanpa Netral</strong> paling stabil (Selisih CV-Test &lt; 1%).</p>
-                            </div>
-                            <div className="flex gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl items-start">
-                                <FiAlertCircle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-                                <p className="text-xs text-red-800 dark:text-red-300">Model Balancing mengalami indikasi <strong>Overfitting</strong> (Selisih &gt; 8%).</p>
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
+                    </div>
+                </motion.div>
             </div>
         </div >
     );

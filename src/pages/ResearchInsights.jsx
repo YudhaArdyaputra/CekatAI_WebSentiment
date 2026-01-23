@@ -270,7 +270,7 @@ export default function ResearchInsights() {
                             <FiPieChart className="w-6 h-6 icon-emboss" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Distribusi Data</h2>
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Distribusi Data Latih</h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400">Tidak Seimbang vs Seimbang.</p>
                         </div>
                     </div>
@@ -300,7 +300,15 @@ export default function ResearchInsights() {
                                                 return (<Cell key={`cell-${index}`} fill={gradientMap[entry.color] || entry.color} stroke="rgba(255,255,255,0.3)" strokeWidth={2} filter="url(#chartShadow)" />);
                                             })}
                                         </Pie>
-                                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                        <Legend 
+                                            verticalAlign="bottom" 
+                                            height={36} 
+                                            iconType="circle"
+                                            formatter={(value, entry) => {
+                                                const item = distributionData.find(d => d.name === value);
+                                                return `${value}:${item?.value || 0}`;
+                                            }}
+                                        />
                                     </RechartsPie>
                                 </ResponsiveContainer>
                             </div>
@@ -330,7 +338,15 @@ export default function ResearchInsights() {
                                                 return (<Cell key={`cell-${index}`} fill={gradientMap[entry.color] || entry.color} stroke="rgba(255,255,255,0.3)" strokeWidth={2} filter="url(#chartShadow)" />);
                                             })}
                                         </Pie>
-                                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                        <Legend 
+                                            verticalAlign="bottom" 
+                                            height={36} 
+                                            iconType="circle"
+                                            formatter={(value, entry) => {
+                                                const item = balancedData.find(d => d.name === value);
+                                                return `${value}:${item?.value || 0}`;
+                                            }}
+                                        />
                                     </RechartsPie>
                                 </ResponsiveContainer>
                             </div>

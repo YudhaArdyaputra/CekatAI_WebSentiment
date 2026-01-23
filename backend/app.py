@@ -187,6 +187,93 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/predict_all', methods=['POST'])
+def predict_all():
+    """
+    Predict sentiment using all 4 experiment models
+    
+    Request body:
+    {
+        "text": "Input text to analyze"
+    }
+    
+    Returns predictions from all 4 models: normal, smote, bt, no_neutral
+    """
+    try:
+        data = request.json
+        text = data.get('text', '')
+
+        # Validation
+        if not text:
+            return jsonify({"error": "No text provided"}), 400
+
+        # 1. Preprocess text (once for all models)
+        cleaned_text = preprocessor.preprocess(text)
+
+        if not cleaned_text.strip():
+            return jsonify({
+                "error": "Text is empty after preprocessing",
+                "original_text": text
+            }), 400
+
+        # 2. Run predictions on all models
+        all_results = {}
+        model_order = ['normal', 'smote', 'bt', 'no_neutral']  # Define order
+        
+        for model_type in model_order:
+            if model_type not in models:
+                continue
+                
+            try:
+                # Vectorize using the model's specific vectorizer
+                vectorizer = vectorizers[model_type]
+                vector = vectorizer.transform([cleaned_text])
+
+                # Predict
+                model = models[model_type]
+                prediction = model.predict(vector)[0]
+                probabilities = model.predict_proba(vector)[0]
+
+                # Map prediction to label
+                label_map = MODEL_CONFIG[model_type]['classes']
+                sentiment = label_map.get(prediction, "Unknown")
+
+                # Calculate confidence (max probability)
+                confidence = float(max(probabilities) * 100)
+
+                # Get probability for each class
+                class_probabilities = {}
+                for idx, prob in enumerate(probabilities):
+                    class_label = model.classes_[idx]
+                    class_name = label_map.get(class_label, f"Class {class_label}")
+                    class_probabilities[class_name] = round(prob * 100, 2)
+
+                all_results[model_type] = {
+                    "sentiment": sentiment,
+                    "confidence": f"{confidence:.2f}",
+                    "model_description": MODEL_CONFIG[model_type]['description'],
+                    "probabilities": class_probabilities
+                }
+                
+            except Exception as e:
+                print(f"Error predicting with {model_type}: {e}")
+                all_results[model_type] = {
+                    "error": str(e)
+                }
+
+        return jsonify({
+            "text": text,
+            "cleaned_text": cleaned_text,
+            "results": all_results
+        })
+
+    except Exception as e:
+        print(f"Prediction Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/batch_predict', methods=['POST'])
 def batch_predict():
     """

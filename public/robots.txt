@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cekataisentiment.web.id/sitemap.xml

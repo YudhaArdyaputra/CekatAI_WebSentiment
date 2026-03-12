@@ -26,29 +26,6 @@ export const MODELS = {
         ],
         isBinary: false
     },
-    tanpaNetral: {
-        id: 'tanpaNetral',
-        name: 'Tanpa Netral',
-        description: 'Klasifikasi biner (Negatif vs Positif)',
-        accuracy: 78.65,
-        precision: 80.0,
-        recall: 79.0,
-        f1Score: 77.44,
-        cvAccuracy: 78.08,
-        cvF1Score: 76.83,
-        nGram: '(1, 3)',
-        trainSamples: 2381,
-        testSamples: 1021,
-        perClass: {
-            negatif: { precision: 75.92, recall: 94.28, f1: 84.11, support: 612 },
-            positif: { precision: 86.59, recall: 55.26, f1: 67.46, support: 409 }
-        },
-        confusionMatrix: [
-            [577, 35],
-            [183, 226]
-        ],
-        isBinary: true
-    },
     smote: {
         id: 'smote',
         name: 'SMOTE',
@@ -117,20 +94,18 @@ export const DATASET_INFO = {
 
 export const COMPARATIVE_METRICS = [
     { name: 'Normal', accuracy: 73.07, precision: 75.0, recall: 73.0, f1: 70.21 },
-    { name: 'Tanpa Netral', accuracy: 78.65, precision: 80.0, recall: 79.0, f1: 77.44 },
     { name: 'SMOTE', accuracy: 70.93, precision: 73.07, recall: 70.93, f1: 71.48 },
     { name: 'Back-translation', accuracy: 71.61, precision: 71.0, recall: 72.0, f1: 71.20 }
 ];
 
 export const F1_PER_CLASS = [
-    { name: 'Negatif', Normal: 80.42, TanpaNetral: 84.11, SMOTE: 78.20, Backstranslation: 78.32 },
-    { name: 'Netral', Normal: 30.68, TanpaNetral: null, SMOTE: 51.10, Backstranslation: 46.49 },
-    { name: 'Positif', Normal: 68.95, TanpaNetral: 67.46, SMOTE: 68.64, Backstranslation: 69.32 }
+    { name: 'Negatif', Normal: 80.42, SMOTE: 78.20, Backstranslation: 78.32 },
+    { name: 'Netral', Normal: 30.68, SMOTE: 51.10, Backstranslation: 46.49 },
+    { name: 'Positif', Normal: 68.95, SMOTE: 68.64, Backstranslation: 69.32 }
 ];
 
 export const CV_VS_TEST = [
     { name: 'Normal', cv: 71.63, test: 73.07 },
-    { name: 'Tanpa Netral', cv: 78.08, test: 78.65 },
     { name: 'SMOTE', cv: 79.98, test: 70.93 },
     { name: 'Back-translation', cv: 79.84, test: 71.61 }
 ];
@@ -143,13 +118,6 @@ export const CLASSIFICATION_REPORT_DATA = {
             { label: 'Negatif', precision: 0.704797, recall: 0.936275, f1Score: 0.804211 },
             { label: 'Netral', precision: 0.870968, recall: 0.186207, f1Score: 0.306818 },
             { label: 'Positif', precision: 0.782609, recall: 0.616137, f1Score: 0.689466 }
-        ]
-    },
-    tanpaNetral: {
-        name: 'Tanpa Netral',
-        classes: [
-            { label: 'Negatif', precision: 0.759211, recall: 0.942810, f1Score: 0.841108 },
-            { label: 'Positif', precision: 0.865900, recall: 0.552567, f1Score: 0.674627 }
         ]
     },
     smote: {

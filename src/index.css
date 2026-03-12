@@ -471,3 +471,51 @@ body {
 .badge-glossy-xs {
   @apply px-2.5 py-0.5 text-xs;
 }
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+/* Sentiment Carousel Animation - Velocity Based */
+/* Desktop (>= 768px): 360px width + 16px gap */
+@keyframes scroll-sentiment-desktop {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(calc(-1 * (360px + 16px) * 18), 0, 0);
+  }
+}
+
+/* Desktop only - Auto scroll animation */
+@media (min-width: 768px) {
+  .sentiment-carousel {
+    animation: scroll-sentiment-desktop 30s linear infinite;
+    will-change: transform;
+    /* Hardware acceleration fixes for text blur */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    backface-visibility: hidden;
+    perspective: 1000px;
+    transform: translateZ(0);
+  }
+
+  .sentiment-carousel:hover {
+    animation-play-state: paused;
+  }
+}
+
+/* Mobile (< 768px): No animation, manual scroll only */
+@media (max-width: 767.9px) {
+  .sentiment-carousel {
+    animation: none;
+    /* Keep text sharp for manual scrolling */
+    -webkit-font-smoothing: antialiased;
+  }
+}

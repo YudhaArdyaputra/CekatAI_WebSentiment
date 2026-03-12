@@ -1,11 +1,12 @@
-import { useState, useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
+import { motion, useScroll, useTransform, AnimatePresence, useInView, useMotionValue, useSpring } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiArrowRight, FiDatabase, FiLayers, FiTrendingUp, FiBarChart2, FiAlertTriangle, FiTarget, FiX, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiArrowRight, FiDatabase, FiLayers, FiTrendingUp, FiBarChart2, FiAlertTriangle, FiTarget, FiX, FiChevronDown, FiChevronUp, FiMessageCircle } from 'react-icons/fi';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, LabelList } from 'recharts';
-import { SENTIMENT_DISTRIBUTION, PLATFORM_COMPARISON, WORDCLOUDS, KEY_FINDINGS, TOPIC_MODELING_DATA, TOPIC_SENTIMENT_DISTRIBUTION } from '../data/homeData';
+import { SENTIMENT_DISTRIBUTION, PLATFORM_COMPARISON, WORDCLOUDS, KEY_FINDINGS, TOPIC_MODELING_DATA, TOPIC_SENTIMENT_DISTRIBUTION, SENTIMENT_EXAMPLES } from '../data/homeData';
 import OrbitalSystem from '../components/OrbitalSystem';
 import { ChartGradients, PIE_GRADIENT_COLORS, GRADIENT_COLORS } from '../components/ChartGradients';
+import { useAnimatedCounter } from '../hooks/useAnimatedCounter';
 
 const Home = () => {
     const [activeDistTab, setActiveDistTab] = useState('gabungan');
@@ -13,8 +14,34 @@ const Home = () => {
     const [activeTopicTab, setActiveTopicTab] = useState('gabungan');
     const [selectedImage, setSelectedImage] = useState(null);
     const [openTopicId, setOpenTopicId] = useState(null);
+    const [pieChartKey, setPieChartKey] = useState(0);
+    const [barChartKey, setBarChartKey] = useState(0);
 
     const targetRef = useRef(null);
+    const pieChartRef = useRef(null);
+    const barChartRef = useRef(null);
+    
+    const isPieChartInView = useInView(pieChartRef, { once: true, margin: "-100px" });
+    const isBarChartInView = useInView(barChartRef, { once: true, margin: "-100px" });
+
+    // Randomize sentiment examples once and duplicate for infinite scroll
+    const [randomizedExamples] = useState(() => {
+        // Fisher-Yates Shuffle for better randomness
+        const shuffled = [...SENTIMENT_EXAMPLES];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        
+        // Triple the array for seamless infinite scroll with full coverage
+        return [...shuffled, ...shuffled, ...shuffled];
+    });
+
+    const distData = SENTIMENT_DISTRIBUTION[activeDistTab];
+    const wcData = WORDCLOUDS[activeWCTab];
+    const topicData = TOPIC_MODELING_DATA[activeTopicTab];
+    const topicSentimentData = TOPIC_SENTIMENT_DISTRIBUTION[activeTopicTab];
+
     const { scrollYProgress } = useScroll({
         target: targetRef,
         offset: ['start end', 'end start']
@@ -23,10 +50,26 @@ const Home = () => {
     const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.85, 1, 0.85]);
     const y = useTransform(scrollYProgress, [0, 1], [50, -50]);
 
-    const distData = SENTIMENT_DISTRIBUTION[activeDistTab];
-    const wcData = WORDCLOUDS[activeWCTab];
-    const topicData = TOPIC_MODELING_DATA[activeTopicTab];
-    const topicSentimentData = TOPIC_SENTIMENT_DISTRIBUTION[activeTopicTab];
+    // Trigger Pie Chart animation when in view
+    useEffect(() => {
+        if (isPieChartInView) {
+            setPieChartKey(prev => prev + 1);
+        }
+    }, [isPieChartInView]);
+
+    // Trigger Bar Chart animation when in view
+    useEffect(() => {
+        if (isBarChartInView) {
+            setBarChartKey(prev => prev + 1);
+        }
+    }, [isBarChartInView]);
+
+    // Retrigger animation when tab changes
+    useEffect(() => {
+        if (isPieChartInView) {
+            setPieChartKey(prev => prev + 1);
+        }
+    }, [activeDistTab, isPieChartInView]);
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -38,7 +81,54 @@ const Home = () => {
         visible: { opacity: 1, y: 0, transition: { duration: 0.8 } }
     };
 
-    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+    // Animated Number Component
+    const AnimatedNumber = ({ value, decimals = 0, suffix = '' }) => {
+        const ref = useRef(null);
+        const motionValue = useMotionValue(0);
+        const springValue = useSpring(motionValue, { damping: 60, stiffness: 100 });
+        const isInView = useInView(ref, { once: true, margin: "0px" });
+        const [displayValue, setDisplayValue] = useState(0);
+
+        useEffect(() => {
+            if (isInView) {
+                motionValue.set(value);
+            }
+        }, [isInView, value, motionValue]);
+
+        useEffect(() => {
+            const unsubscribe = springValue.on('change', (latest) => {
+                setDisplayValue(latest);
+            });
+            return unsubscribe;
+        }, [springValue]);
+
+        return (
+            <span ref={ref}>
+                {Math.round(displayValue)}{suffix}
+            </span>
+        );
+    };
+
+    // Animated Progress Bar Component
+    const AnimatedProgressBar = ({ percentage, gradient }) => {
+        const ref = useRef(null);
+        const isInView = useInView(ref, { once: true, margin: "0px" });
+
+        return (
+            <div ref={ref} className="h-2 w-full bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden shadow-inner">
+                <motion.div
+                    className="h-full rounded-full progress-glossy"
+                    style={{ background: gradient }}
+                    initial={{ width: 0 }}
+                    animate={isInView ? { width: `${percentage}%` } : { width: 0 }}
+                    transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
+                />
+            </div>
+        );
+    };
+
+    // Custom animated label for Pie Chart
+    const AnimatedPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
         const RADIAN = Math.PI / 180;
         const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -51,6 +141,47 @@ const Home = () => {
                 {`${(percent * 100).toFixed(0)}%`}
             </text>
         );
+    };
+
+    const renderCustomizedLabel = (props) => <AnimatedPieLabel {...props} />;
+
+    const CenterLabelContent = () => {
+        const total = distData.reduce((sum, entry) => sum + entry.value, 0);
+        const ref = useRef(null);
+        const motionValue = useMotionValue(0);
+        const springValue = useSpring(motionValue, { damping: 60, stiffness: 80, duration: 1500 });
+        const isInView = useInView(ref, { once: true, margin: "0px" });
+        const [displayValue, setDisplayValue] = useState(0);
+
+        useEffect(() => {
+            if (isInView) {
+                motionValue.set(total);
+            }
+        }, [isInView, total, motionValue]);
+
+        useEffect(() => {
+            const unsubscribe = springValue.on('change', (latest) => {
+                setDisplayValue(Math.round(latest));
+            });
+            return unsubscribe;
+        }, [springValue]);
+
+        return (
+            <div ref={ref} className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center">
+                    <div className="text-slate-800 dark:text-slate-100 text-[42px] font-bold">
+                        {displayValue.toLocaleString()}
+                    </div>
+                    <div className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
+                        Total Data
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderCenterLabel = () => {
+        return null; // We'll use the overlay component instead
     };
 
     return (
@@ -81,7 +212,7 @@ const Home = () => {
             <div className="w-full max-w-7xl px-4 space-y-4">
                 <section className="flex flex-col justify-center py-4">
                     <div className="grid lg:grid-cols-2 gap-4 h-full">
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="card-clean h-full flex flex-col justify-between">
+                        <motion.div ref={pieChartRef} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="card-clean h-full flex flex-col justify-between">
                             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">Distribusi Sentimen</h2>
                             <div className="flex p-1 bg-slate-100 dark:bg-neutral-800 rounded-xl mb-6 self-start overflow-x-auto max-w-full gap-1">
                                 {['gabungan', 'tiktok', 'x'].map((tab) => (
@@ -106,9 +237,9 @@ const Home = () => {
                                     </button>
                                 ))}
                             </div>
-                            <div className="flex-grow flex items-center justify-center min-h-[400px]">
+                            <div className="flex-grow flex items-center justify-center min-h-[400px] relative">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
+                                    <PieChart key={`pie-${pieChartKey}`}>
                                         <ChartGradients />
                                         <Pie
                                             data={distData}
@@ -120,6 +251,10 @@ const Home = () => {
                                             dataKey="value"
                                             label={renderCustomizedLabel}
                                             labelLine={false}
+                                            isAnimationActive={true}
+                                            animationBegin={0}
+                                            animationDuration={1500}
+                                            animationEasing="ease-out"
                                         >
                                             {distData.map((entry, index) => {
                                                 const gradientMap = {
@@ -132,6 +267,7 @@ const Home = () => {
                                                 return (<Cell key={`cell-${index}`} fill={gradientMap[colorKey] || entry.color} stroke="rgba(255,255,255,0.3)" strokeWidth={2} filter="url(#chartShadow)" />);
                                             })}
                                         </Pie>
+                                        {renderCenterLabel()}
                                         <Legend
                                             verticalAlign="bottom"
                                             height={36}
@@ -143,26 +279,47 @@ const Home = () => {
                                         />
                                     </PieChart>
                                 </ResponsiveContainer>
+                                <CenterLabelContent />
                             </div>
                         </motion.div>
 
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="card-clean h-full flex flex-col justify-between">
+                        <motion.div ref={barChartRef} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="card-clean h-full flex flex-col justify-between">
                             <div className="mb-6">
                                 <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Perbandingan Platform</h2>
                                 <p className="text-slate-500 dark:text-slate-400">Perbandingan jumlah data sentimen antara TikTok dan X (Twitter).</p>
                             </div>
                             <div className="flex-grow min-h-[400px]">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={PLATFORM_COMPARISON} margin={{ top: 20, right: 30, left: 20, bottom: 20 }} barGap={12}>
+                                    <BarChart key={`bar-${barChartKey}`} data={PLATFORM_COMPARISON} margin={{ top: 20, right: 30, left: 20, bottom: 20 }} barGap={12}>
                                         <ChartGradients />
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" strokeOpacity={0.6} />
                                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 500 }} dy={10} />
                                         <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />
                                         <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '20px' }} />
-                                        <Bar dataKey="TikTok" fill="url(#blueGloss)" radius={[6, 6, 0, 0]} maxBarSize={80} animationDuration={1500} filter="url(#emboss)">
+                                        <Bar 
+                                            dataKey="TikTok" 
+                                            fill="url(#blueGloss)" 
+                                            radius={[6, 6, 0, 0]} 
+                                            maxBarSize={80} 
+                                            isAnimationActive={true}
+                                            animationBegin={0}
+                                            animationDuration={1500}
+                                            animationEasing="ease-out"
+                                            filter="url(#emboss)"
+                                        >
                                             <LabelList dataKey="TikTok" position="top" fill="#64748B" fontSize={12} fontWeight={600} />
                                         </Bar>
-                                        <Bar dataKey="Twitter" fill="url(#cyanGloss)" radius={[6, 6, 0, 0]} maxBarSize={80} animationDuration={1500} filter="url(#emboss)">
+                                        <Bar 
+                                            dataKey="Twitter" 
+                                            fill="url(#cyanGloss)" 
+                                            radius={[6, 6, 0, 0]} 
+                                            maxBarSize={80} 
+                                            isAnimationActive={true}
+                                            animationBegin={100}
+                                            animationDuration={1500}
+                                            animationEasing="ease-out"
+                                            filter="url(#emboss)"
+                                        >
                                             <LabelList dataKey="Twitter" position="top" fill="#64748B" fontSize={12} fontWeight={600} />
                                         </Bar>
                                     </BarChart>
@@ -173,13 +330,81 @@ const Home = () => {
                 </section>
 
                 <section className="flex flex-col justify-center py-4">
+                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.15 }} className="card-clean h-full flex flex-col overflow-hidden">
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Contoh Sentimen</h2>
+                            <p className="text-slate-500 dark:text-slate-400">Beberapa contoh komentar nyata dari netizen tentang Cekat AI.</p>
+                        </div>
+                        
+                        <div className="relative -mx-6 md:mx-0 md:overflow-hidden">
+                            <div className="overflow-x-auto snap-x snap-mandatory scroll-smooth pb-6 md:pb-0 hide-scrollbar md:overflow-hidden">
+                                <div className="sentiment-carousel flex md:px-0 items-stretch gap-3 px-6 md:gap-4">
+                                    {randomizedExamples.map((example, idx) => {
+                                        let bgGradient, borderColor;
+                                        
+                                        if (example.sentiment === 'Positif') {
+                                            bgGradient = 'linear-gradient(145deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.12) 100%)';
+                                            borderColor = 'rgba(16, 185, 129, 0.3)';
+                                        } else if (example.sentiment === 'Negatif') {
+                                            bgGradient = 'linear-gradient(145deg, rgba(239, 68, 68, 0.08) 0%, rgba(220, 38, 38, 0.12) 100%)';
+                                            borderColor = 'rgba(239, 68, 68, 0.3)';
+                                        } else {
+                                            bgGradient = 'linear-gradient(145deg, rgba(100, 116, 139, 0.08) 0%, rgba(71, 85, 105, 0.12) 100%)';
+                                            borderColor = 'rgba(100, 116, 139, 0.3)';
+                                        }
+
+                                        return (
+                                            <div key={idx} className="w-[80vw] min-w-[80vw] sm:w-[360px] sm:min-w-[360px] flex-shrink-0 snap-center">
+                                            <div 
+                                                className="relative overflow-hidden rounded-2xl p-4 md:p-6 border flex flex-col justify-between h-full w-full"
+                                                style={{
+                                                    background: bgGradient,
+                                                    borderColor: borderColor,
+                                                    boxShadow: `0 4px 12px ${borderColor.replace('0.3', '0.1')}`
+                                                }}
+                                            >
+                                                <div className="absolute top-0 left-0 right-0 h-[40%] pointer-events-none" style={{
+                                                    background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, transparent 100%)',
+                                                    borderRadius: '1rem 1rem 0 0',
+                                                    zIndex: 1
+                                                }} />
+                                                <div className="relative z-10">
+                                                    <div className="flex justify-between items-start mb-3 md:mb-4">
+                                                        <FiMessageCircle className={`w-6 h-6 md:w-8 md:h-8 ${
+                                                            example.sentiment === 'Positif' ? 'text-emerald-400' :
+                                                            example.sentiment === 'Negatif' ? 'text-red-400' :
+                                                            'text-slate-400'
+                                                        }`} />
+                                                        <span className={`badge-glossy badge-glossy-xs ${
+                                                            example.sentiment === 'Positif' ? 'badge-positive' :
+                                                            example.sentiment === 'Negatif' ? 'badge-negative' :
+                                                            'badge-neutral'
+                                                        }`}>
+                                                            {example.sentiment}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-slate-700 dark:text-slate-200 italic text-xs sm:text-sm md:text-base leading-relaxed">
+                                                        "{example.text}"
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </section>
+
+                <section className="flex flex-col justify-center py-4">
                     <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="card-clean h-full flex flex-col">
                         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                             <div>
                                 <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Wordcloud Analisis</h2>
                                 <p className="text-slate-500 dark:text-slate-400">Visualisasi kata yang paling sering muncul dalam setiap kategori sentimen.</p>
                             </div>
-                            <div className="grid grid-cols-2 md:inline-flex p-1 bg-slate-100 dark:bg-neutral-800 rounded-xl gap-1 w-full md:w-auto">
+                            <div className="flex flex-wrap md:inline-flex p-1 bg-slate-100 dark:bg-neutral-800 rounded-xl gap-1 w-full md:w-auto">
                                 {Object.keys(WORDCLOUDS).map((key) => (
                                     <button
                                         key={key}
@@ -285,7 +510,7 @@ const Home = () => {
                                                     <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base text-left">{topic.label.split(': ')[1]}</h3>
                                                     <div className="flex items-center justify-between">
                                                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${tagColorClass}`}>
-                                                            {dominantPct}% {sentiment.dominant.toLowerCase()}
+                                                            <AnimatedNumber value={dominantPct} decimals={0} suffix={`% ${sentiment.dominant.toLowerCase()}`} />
                                                         </span>
                                                         {isOpen ? <FiChevronUp className="w-5 h-5 text-slate-400" /> : <FiChevronDown className="w-5 h-5 text-slate-400" />}
                                                     </div>
@@ -293,9 +518,7 @@ const Home = () => {
                                             </button>
                                             {isOpen && (
                                                 <div className="mt-2 p-4 bg-slate-50 dark:bg-neutral-900 rounded-xl border border-slate-200 dark:border-neutral-700 space-y-3">
-                                                    <div className="h-2 w-full bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden shadow-inner">
-                                                        <div className="h-full rounded-full transition-all duration-1000 ease-out progress-glossy" style={{ width: `${dominantPct}%`, background: progressGradient }} />
-                                                    </div>
+                                                    <AnimatedProgressBar percentage={dominantPct} gradient={progressGradient} />
                                                     <div className="flex flex-wrap gap-2">
                                                         {topic.keywords.map((keywordObj, idx) => {
                                                             let kwColorClass = 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
@@ -321,11 +544,11 @@ const Home = () => {
                                         <div className="hidden lg:block space-y-2">
                                             <div className="flex justify-between items-end">
                                                 <h3 className="font-bold text-slate-800 dark:text-slate-200 text-lg line-clamp-1" title={topic.label.split(': ')[1]}>{topic.label.split(': ')[1]}</h3>
-                                                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{dominantPct}% {sentiment.dominant.toLowerCase()}</span>
+                                                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                                                    <AnimatedNumber value={dominantPct} decimals={0} suffix={`% ${sentiment.dominant.toLowerCase()}`} />
+                                                </span>
                                             </div>
-                                            <div className="h-2 w-full bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden shadow-inner">
-                                                <div className="h-full rounded-full transition-all duration-1000 ease-out progress-glossy" style={{ width: `${dominantPct}%`, background: progressGradient }} />
-                                            </div>
+                                            <AnimatedProgressBar percentage={dominantPct} gradient={progressGradient} />
                                             <div className="flex flex-wrap gap-2">
                                                 {topic.keywords.map((keywordObj, idx) => {
                                                     let kwColorClass = 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300';

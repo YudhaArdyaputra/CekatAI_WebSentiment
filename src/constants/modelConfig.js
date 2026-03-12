@@ -7,24 +7,21 @@
 export const MODEL_TYPES = {
     NORMAL: 'normal',
     SMOTE: 'smote',
-    BACKTRANSLATION: 'bt',
-    NO_NEUTRAL: 'no_neutral'
+    BACKTRANSLATION: 'bt'
 };
 
 // Model display names
 export const MODEL_DISPLAY_NAMES = {
     [MODEL_TYPES.NORMAL]: 'Baseline',
     [MODEL_TYPES.SMOTE]: 'Augmentasi SMOTE',
-    [MODEL_TYPES.BACKTRANSLATION]: 'Back-translation',
-    [MODEL_TYPES.NO_NEUTRAL]: 'Tanpa Netral (Biner)'
+    [MODEL_TYPES.BACKTRANSLATION]: 'Back-translation'
 };
 
 // Short model names for tabs
 export const MODEL_SHORT_NAMES = {
     [MODEL_TYPES.NORMAL]: 'Baseline',
     [MODEL_TYPES.SMOTE]: 'SMOTE',
-    [MODEL_TYPES.BACKTRANSLATION]: 'Back-translation',
-    [MODEL_TYPES.NO_NEUTRAL]: 'Tanpa Netral'
+    [MODEL_TYPES.BACKTRANSLATION]: 'Back-translation'
 };
 
 /**

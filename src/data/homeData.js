@@ -58,13 +58,6 @@ export const WORDCLOUDS = {
             { sentiment: 'Netral', src: '/assets/wordclouds/backtrans_wc_netral.png' },
             { sentiment: 'Positif', src: '/assets/wordclouds/backtrans_wc_positif.png' },
         ]
-    },
-    tanpanetral: {
-        title: 'Tanpa Netral',
-        images: [
-            { sentiment: 'Negatif', src: '/assets/wordclouds/tanpanetral_wc_negatif.png' },
-            { sentiment: 'Positif', src: '/assets/wordclouds/tanpanetral_wc_positif.png' },
-        ]
     }
 };
 
@@ -292,3 +285,24 @@ export const TOPIC_SENTIMENT_DISTRIBUTION = {
         { topic_id: 5, sentiment: { negatif: 57.8, netral: 7.8, positif: 34.4 }, dominant: 'Negatif' }
     ]
 };
+
+export const SENTIMENT_EXAMPLES = [
+    { text: "Gua suka kagum fitur CekatAI bisa bikin jalur komunikasi makin rapih.", sentiment: "Positif" },
+    { text: "Liat demo CekatAI di event kemaren gila itu sistem smooth banget. Keren dah pokonya ni AI local", sentiment: "Positif" },
+    { text: "Gua liat CekatAI respons-nya cepet parah langsung jawab tanpa delay. Gokil bgt dah ini AI!!!", sentiment: "Positif" },
+    { text: "Responnya CekatAI bener-bener real-time. Gak delay", sentiment: "Positif" },
+    { text: "Gua impressed gimana CekatAI bisa stabil 24/7 tanpa delay", sentiment: "Positif" },
+    { text: "memang mending pakai ai. pusing pakai karyawan, gaji minta layak giliran masuk kerja ada saja alasan untuk ng masuk kerja", sentiment: "Positif" },
+    { text: "bayar ato free ka AI nya?", sentiment: "Netral" },
+    { text: "CekatAI bisa dipakai buat ticketing juga? Atau fokusnya ke chatbot doang?", sentiment: "Netral" },
+    { text: "CekatAI katanya support integrasi multi-channel. Tapi real-nya udah jalan belum ya?", sentiment: "Netral" },
+    { text: "Trusted ga sih CekatAI?", sentiment: "Netral" },
+    { text: "Gua penasaran siapa target utama dari CekatAI sebenernya? Korporat atau startup kecil juga bisa?", sentiment: "Netral" },
+    { text: "CekatAI punya fitur fallback ke CS manusia gak sih kalau gagal jawab?", sentiment: "Netral" },
+    { text: "bayangin, semua pakai AI, terus banyak pengangguran, akhirnya daya beli masyarakat turun, bisnismu otomatis juga turun karena gaada yg beli", sentiment: "Negatif" },
+    { text: "Gw benci banget kalo komplain yg jawab bot. Ada lagi nih cekat ai, lah laahh", sentiment: "Negatif" },
+    { text: "CekatAI responya ngaco + ga nyambung", sentiment: "Negatif" },
+    { text: "CekatAI suka salah tag kategori. Masalah billing malah masuk ke teknis ribet banget", sentiment: "Negatif" },
+    { text: "jika AI menguasai segalanya..banyak pengangguran..terus yg jd konsumen juga merosot..krn banyak yg gk punya duit (nganggur)..perputarannya gimna?", sentiment: "Negatif" },
+    { text: "tapi untuk pertanyaan spesifik AI gak bisa jawab sampai buat kesal customer gak nemu jawaban contoh di platform orange mau complain jawabannya mutar2", sentiment: "Negatif" }
+];
